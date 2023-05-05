@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'wishlist',
     'orderlist',
     'cartlist',
-    'product'
+    'product',
+    'cloudinary',
+    'cloudinary-storage'
 ]
 
 MIDDLEWARE = [
@@ -94,23 +96,25 @@ WSGI_APPLICATION = 'EcommerceBackend.wsgi.application'
 # }
 
 # Database postgresql
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'test',
-#         'USER': 'postgres',
-#         'PASSWORD': '1234',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('DB_NAME_LOCAL'),
+        'USER': env('USER_LOCAL_DB'),
+        'PASSWORD': env('PASSWORD_LOCAL_DB'),
+        'HOST': env('HOST_LOCAL_DB'),
+        'PORT': env('PORT_LOCAL_DB'),
+    }
+}
 
 
 # Render postgresql live database
 
-DATABASES = {
-    'default': dj_database_url.parse(env('DATABASE_URL'))
-}
+# DATABASES = {
+#     'default': dj_database_url.parse(env('DATABASE_URL'))
+# }
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -146,6 +150,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': env('CLOUD_NAME'),
+    'API_KEY': env('API_KEY'),
+    'API_SECRET': env('API_SECRET'),
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
