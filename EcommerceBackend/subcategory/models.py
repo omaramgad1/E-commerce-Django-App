@@ -6,7 +6,7 @@ from category.models import Category
 
 
 class SubCategory(models.Model):
-    name = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255, unique=True)
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, related_name='subcategories')
 

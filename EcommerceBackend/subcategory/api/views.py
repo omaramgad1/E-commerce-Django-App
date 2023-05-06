@@ -3,6 +3,27 @@ from rest_framework.response import Response
 from rest_framework import status
 from ..models import SubCategory
 from .serializers import SubCategorySerializer
+from django.core.paginator import Paginator
+
+
+@api_view(['GET'])
+def SubCategory_pagenation(request):
+    if request.method == 'GET':
+        queryset = SubCategory.objects.all()
+        queryset_len = SubCategory.objects.all().count()
+        limit = request.GET.get('limit', 10)
+        page = request.GET.get('page', 1)
+
+        paginator = Paginator(queryset, limit)
+        objects = paginator.get_page(page)
+        serializer = SubCategorySerializer(objects, many=True)
+        return Response({'data': serializer.data,
+                         'previous_page': objects.previous_page_number() if objects.has_previous() else None,
+                         'current_page': objects.number,
+                         'next_page': objects.next_page_number() if objects.has_next() else None,
+                         'total_Docs': queryset_len,
+                         'total_pages': paginator.num_pages,
+                         })
 
 
 @api_view(['GET', 'POST'])

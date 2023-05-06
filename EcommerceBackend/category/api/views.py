@@ -5,6 +5,31 @@ from rest_framework.response import Response
 from rest_framework import status
 from ..models import Category
 from .serializers import CategorySerializer
+from django.core.paginator import Paginator
+
+# page = request.GET.get('page', 1)
+# paginator = Paginator(queryset, limit)
+# objects = paginator.get_page(page)
+
+
+@api_view(['GET'])
+def Category_pagenation(request):
+    if request.method == 'GET':
+        queryset = Category.objects.all()
+        queryset_len = Category.objects.all().count()
+        limit = request.GET.get('limit', 10)
+        page = request.GET.get('page', 1)
+
+        paginator = Paginator(queryset, limit)
+        objects = paginator.get_page(page)
+        serializer = CategorySerializer(objects, many=True)
+        return Response({'data': serializer.data,
+                         'previous_page': objects.previous_page_number() if objects.has_previous() else None,
+                         'current_page': objects.number,
+                         'next_page': objects.next_page_number() if objects.has_next() else None,
+                         'total_Docs': queryset_len,
+                         'total_pages': paginator.num_pages,
+                         })
 
 
 @api_view(['GET', 'POST'])
