@@ -4,26 +4,24 @@ from subcategory.models import SubCategory
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=200, null=True)
-    description = models.TextField(null=True, blank=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
     imageUrl = models.ImageField(upload_to='products/', blank=True)
-    price = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
     subcategory = models.ForeignKey(
-        SubCategory, on_delete=models.CASCADE, related_name="products", null=True)
+        SubCategory, on_delete=models.CASCADE, related_name="products")
 
-
-""" 
     class Meta:
         verbose_name_plural = 'Products'
 
     def __str__(self):
-        return self.name """
+        return self.name
 
 
 class ProductDetails(models.Model):
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name='details', null=True)
-    color = models.CharField(max_length=50, null=True)
+        Product, on_delete=models.CASCADE, related_name='details')
+    color = models.CharField(max_length=50)
     quantity = models.IntegerField()
     sizes = models.CharField(max_length=3, choices=[
         ('S', 'Small'),
@@ -33,9 +31,5 @@ class ProductDetails(models.Model):
         ('XXL', 'Double Extra Large'),
     ])
 
-
-"""     class Meta:
+    class Meta:
         verbose_name_plural = 'ProductDetails'
- """
-"""     def __str__(self):
-        return self.name """

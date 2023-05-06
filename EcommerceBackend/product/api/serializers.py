@@ -3,9 +3,11 @@ from ..models import Product, ProductDetails
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
+    product = serializers.CharField(source='product.name')
+
     class Meta:
         model = ProductDetails
-        fields = ('color', 'size', 'quantity')
+        fields = '__all__'  # ('color', 'sizes', 'quantity')
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -14,5 +16,5 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'name', 'description', 'imageUrl', 'price',
-                  'quantity', 'subcategory', 'details')
+        fields = ('id', 'name', 'description', 'imageUrl',
+                  'price', 'subcategory', 'details')
