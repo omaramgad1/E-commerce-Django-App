@@ -3,8 +3,11 @@ from .views import *
 
 
 urlpatterns = [
-    path('list-all', Category_list, name='category_list'),
-    path('list', Category_pagenation, name='Category_pagenation'),
-
+    path('', Category_pagenation, name='Category_pagenation'),
+    path('list/', Category_list, name='category_list'),
+    path('create/', Category_Create, name='Category_Create'),
+    path('update/<int:pk>/', Category_Update, name='Category_Update'),
+    path('delete/<int:pk>/', Category_Delete, name='Category_Delete'),
     path('<int:pk>/', Category_details, name='Category_details'),
+    path('<int:pk>/products/', Category_Products, name='Category_Products'),
 ]

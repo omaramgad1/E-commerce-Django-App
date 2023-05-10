@@ -2,6 +2,7 @@
 import dj_database_url
 from pathlib import Path
 import environ
+from datetime import timedelta
 
 
 env = environ.Env()
@@ -12,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-d6#tt=lkl^tpl)^uvv6^&+m@v86+n73&e4nq(yy)enmg#lno+4'
+SECRET_KEY = env('DJANGO_SECRECT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -30,15 +31,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    "phonenumber_field",
+    'cloudinary',
+    'cloudinary_storage',
+    'corsheaders',
     # 'user_app',
-    'category',
-    'subcategory',
     # 'wishlist',
     # 'orderlist',
     # 'cartlist',
+    'category',
+    'subcategory',
     'product',
-    'cloudinary',
-    'cloudinary_storage'
+
 ]
 
 MIDDLEWARE = [
@@ -82,24 +86,24 @@ WSGI_APPLICATION = 'EcommerceBackend.wsgi.application'
 #     }
 # }
 
-# Database postgresql
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('DB_NAME_LOCAL'),
-        'USER': env('USER_LOCAL_DB'),
-        'PASSWORD': env('PASSWORD_LOCAL_DB'),
-        'HOST': env('HOST_LOCAL_DB'),
-        'PORT': env('PORT_LOCAL_DB'),
-    }
-}
+# # Database postgresql
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': env('DB_NAME_LOCAL'),
+#         'USER': env('USER_LOCAL_DB'),
+#         'PASSWORD': env('PASSWORD_LOCAL_DB'),
+#         'HOST': env('HOST_LOCAL_DB'),
+#         'PORT': env('PORT_LOCAL_DB'),
+#     }
+# }
 
 
 # Render postgresql live database
 
-# DATABASES = {
-#     'default': dj_database_url.parse(env('DATABASE_URL'))
-# }
+DATABASES = {
+    'default': dj_database_url.parse(env('DATABASE_URL'))
+}
 
 
 # Password validation
@@ -152,7 +156,42 @@ CLOUDINARY_STORAGE = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+CORS_ORIGIN_ALLOW_ALL = False
+
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',
+]
+
+
+# REST_FRAMEWORK = {
+#     "NON_FIELD_ERRORS_KEY":"errors",
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.AllowAny',
+#     ],
+# }
+
 # REST_FRAMEWORK = {
 #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 #     'PAGE_SIZE': 10
+# }
+
+
+# AUTH_USER_MODEL = "users.NewUser"
+
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'ALGORITHM': 'HS256',
+#     'SIGNING_KEY': SECRET_KEY,
+#     'VERIFYING_KEY': None,
+#     'AUTH_HEADER_TYPES': ("Bearer",),
+#     'USER_ID_FIELD': 'id',
+#     'USER_ID_CLAIM': 'user_id',
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+#     'TOKEN_TYPE_CLAIM': 'token_type',
 # }

@@ -18,9 +18,9 @@ class Product(models.Model):
         return self.name
 
 
-class ProductDetails(models.Model):
+class Inventory(models.Model):
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, related_name='details')
+        Product, on_delete=models.CASCADE, related_name='inventory')
     color = models.CharField(max_length=50)
     quantity = models.IntegerField()
     sizes = models.CharField(max_length=3, choices=[
@@ -32,4 +32,4 @@ class ProductDetails(models.Model):
     ])
 
     class Meta:
-        verbose_name_plural = 'ProductDetails'
+        verbose_name_plural = 'Inventories'
