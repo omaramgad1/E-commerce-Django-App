@@ -1,157 +1,125 @@
 from rest_framework import serializers
-from ..models import User  # CustomUser, Address
-from django.core.exceptions import ValidationError
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import get_user_model
-from cloudinary.models import CloudinaryField
-from django.contrib.auth.hashers import make_password
-
-
-# class AddressSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Address
-#         fields = '__all__'
-
-#     def update(self, instance, validated_data):
-#         instance.street = validated_data.get('street', instance.street)
-#         instance.city = validated_data.get('city', instance.city)
-#         instance.country = validated_data.get('country', instance.country)
-#         instance.building_number = validated_data.get(
-#             'building_number', instance.building_number)
-#         instance.save()
-#         return instance
-
-# , 'addresses'
-class UserSerializer(serializers.ModelSerializer):
-    # addresses = AddressSerializer(many=True, required=False)
-
-    class Meta:
-        model = User
-        fields = ['email', 'username', 'password', 'phone', 'date_of_birth']
-        extra_kwargs = {
-            'password': {'write_only': True},
-            'confirm_password': {'write_only': True},
-        }
-
-    def create(self, validated_data):
-
-        validated_data['is_active'] = True
-        return User.objects.create_user(**validated_data)
-
-    def validate(self, data):
-        if User.objects.filter(email=data['email']).exists():
-            raise ValidationError('This email is already exists!')
-
-        if 'phone' not in data:
-            # Handle missing phone number
-            raise serializers.ValidationError('Phone number is required.')
-
-        if User.objects.filter(phone=data['phone']).exists():
-            raise serializers.ValidationError('Phone number already exists.')
-
-        if data['password'] != data['confirm_password']:
-            raise ValidationError("Passwords don't match")
-
-        return data
-
-    def to_representation(self, instance):
-        if isinstance(instance, get_user_model()):
-            return super().to_representation(instance)
-        else:
-            # Handle anonymous user
-            return {'id': None, 'username': 'Anonymous', 'email': None}
+from ..models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    # We are writing this becoz we need confirm password field in our Registratin Request
     password2 = serializers.CharField(
         style={'input_type': 'password'}, write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password2']
+        fields = ('email', 'username', 'first_name', 'last_name', 'phone', 'date_of_birth',
+                  'profileImgUrl', 'password', 'password2')
         extra_kwargs = {
             'password': {'write_only': True}
         }
 
-    def save(self):
-
-        password = self.validated_data['password']
-        password2 = self.validated_data['password2']
-
+    # Validating Password and Confirm Password while Registration
+    def validate(self, attrs):
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
         if password != password2:
             raise serializers.ValidationError(
-                {'error': 'P1 and P2 should be same!'})
+                "Password and Confirm Password doesn't match")
+        return attrs
 
-        if User.objects.filter(email=self.validated_data['email']).exists():
+    # def save(self):
+
+    #     password = self.validated_data['password']
+    #     password2 = self.validated_data['password2']
+
+    #     if password != password2:
+    #         raise serializers.ValidationError(
+    #             {'error':  "Password and Confirm Password doesn't match"})
+
+    #     if User.objects.filter(email=self.validated_data['email']).exists():
+    #         raise serializers.ValidationError(
+    #             {'error': 'Email already exists!'})
+
+    #     account = User(
+    #         email=self.validated_data['email'], username=self.validated_data['username'])
+    #     account.set_password(password)
+    #     account.save()
+
+    def create(self, validate_data):
+        return User.objects.create_user(**validate_data)
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, required=True, style={
+                                     'input_type': 'password'})
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if email and password:
+            user = User.objects.filter(email=email).first()
+
+            if user and user.check_password(password):
+                refresh = RefreshToken.for_user(user)
+                return {
+                    'is_admin': user.is_superuser,
+                    'access_token': str(refresh.access_token),
+                    'refresh_token': str(refresh),
+                }
+            else:
+                raise serializers.ValidationError(
+                    "Unable to authenticate with provided credentials")
+        else:
             raise serializers.ValidationError(
-                {'error': 'Email already exists!'})
-
-        account = User(
-            email=self.validated_data['email'], username=self.validated_data['username'])
-        account.set_password(password)
-        account.save()
-
-        return account
+                "Email and password are required")
 
 
-# class UserUpdateSerializer(serializers.ModelSerializer):
-#     email = serializers.EmailField(required=False)
-#     phone = serializers.CharField(required=False)
-#     # image=CloudinaryField()
-#     password = serializers.CharField(required=False, write_only=True)
-#     confirm_password = serializers.CharField(required=False, write_only=True)
-#     # addresses = AddressSerializer(many=True)
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'first_name', 'last_name',
+                  'date_of_birth', 'phone', 'profileImgUrl')
 
-#     class Meta:
-#         model = User
-#         fields = ['email', 'username', 'password',
-#                   'confirm_password', 'phone', 'date_of_birth']
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name',
+                  'date_of_birth', 'phone', 'profileImgUrl')
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(
+        write_only=True, required=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(
+        write_only=True, required=True, style={'input_type': 'password'})
+    confirm_new_password = serializers.CharField(
+        write_only=True, required=True, style={'input_type': 'password'})
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_new_password']:
+            raise serializers.ValidationError("New passwords don't match")
+        return attrs
+
+
+# class ForgotPasswordSerializer(serializers.Serializer):
+#     email = serializers.EmailField()
 
 #     def validate(self, attrs):
-#         if not any(attrs.values()):
-#             raise serializers.ValidationError(
-#                 "At least one field must be updated")
-
-#         password = attrs.get('password')
-#         confirm_password = attrs.get('confirm_password')
-#         if not password or not confirm_password or password != confirm_password:
-#             raise serializers.ValidationError
+#         email = attrs['email']
+#         try:
+#             user = User.objects.get(email=email)
+#         except User.DoesNotExist:
+#             raise serializers.ValidationError('User not found')
+#         attrs['user'] = user
 #         return attrs
 
-#     def update(self, instance, validated_data):
-#         password = validated_data.pop('password', None)
-#         confirm_password = validated_data.pop('confirm_password', None)
-#         # addresses_data = validated_data.pop('addresses', [])
 
-#         if password and confirm_password:
-#             validated_data['password'] = make_password(password)
-#             validated_data['confirm_password'] = make_password(
-#                 confirm_password)
+# class ResetPasswordSerializer(serializers.Serializer):
+#     new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+#     confirm_new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
 
-#         instance = super().update(instance, validated_data)
-
-#         # for address_data in addresses_data:
-#         #     address_id = address_data.get('id', None)
-#         #     if address_id:
-#         #         try:
-#         #             address = Address.objects.get(id=address_id, user=instance)
-#         #             address_serializer = AddressSerializer(
-#         #                 address, data=address_data)
-#         #             if address_serializer.is_valid():
-#         #                 address_serializer.save()
-#         #             else:
-#         #                 raise serializers.ValidationError(
-#         #                     address_serializer.errors)
-#         #         except Address.DoesNotExist:
-#         #             raise serializers.ValidationError(
-#         #                 f"Address with id {address_id} does not exist.")
-#         #     else:
-#         #         address_serializer = AddressSerializer(data=address_data)
-#         #         if address_serializer.is_valid():
-#         #             address_serializer.save(user=instance)
-#         #         else:
-#         #             raise serializers.ValidationError(
-#         #                 address_serializer.errors)
-
-#         return instance
+#     def validate(self, attrs):
+#         if attrs['new_password'] != attrs['confirm_new_password']:
+#             raise serializers.ValidationError("New passwords don't match")
+#         return attrs# class UserChangePasswordSerializer(serializers.Serializer):
