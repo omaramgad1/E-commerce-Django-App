@@ -23,7 +23,7 @@ class IsOwner(permissions.BasePermission):
         """
         Check if the requesting user is the owner of the review.
         """
-        if obj.review_user == request.user:
+        if obj.user == request.user:
             return True
         else:
             raise PermissionDenied("You are not the owner of this Wishcart.")
