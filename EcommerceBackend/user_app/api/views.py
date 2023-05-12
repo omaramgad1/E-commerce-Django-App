@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.paginator import Paginator
 
 
 # Generate Token Manually
@@ -89,6 +90,27 @@ def get_active_users(request):
     users = User.objects.filter(is_active=True)
     serializer = UserProfileSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_users_pagination(request):
+    if request.method == 'GET':
+        queryset = User.objects.all()
+        queryset_len = User.objects.all().count()
+        limit = request.GET.get('limit', 10)
+        page = request.GET.get('page', 1)
+
+        paginator = Paginator(queryset, limit)
+        objects = paginator.get_page(page)
+        serializer = UserProfileSerializer(objects, many=True)
+        return Response({'data': serializer.data,
+                         'previous_page': objects.previous_page_number() if objects.has_previous() else None,
+                         'current_page': objects.number,
+                         'next_page': objects.next_page_number() if objects.has_next() else None,
+                         'total_Docs': queryset_len,
+                         'total_pages': paginator.num_pages,
+                         })
 
 
 @api_view(['PUT'])

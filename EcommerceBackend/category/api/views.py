@@ -6,10 +6,11 @@ from rest_framework import status
 from ..models import Category
 from .serializers import CategorySerializer
 from django.core.paginator import Paginator
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, AllowAny
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def Category_pagenation(request):
     if request.method == 'GET':
         queryset = Category.objects.all()
@@ -30,6 +31,7 @@ def Category_pagenation(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def Category_list(request):
     if request.method == 'GET':
         categories = Category.objects.all()
@@ -38,6 +40,7 @@ def Category_list(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def Category_Products(request, pk):
     if request.method == 'GET':
         try:
@@ -54,6 +57,7 @@ def Category_Products(request, pk):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def Category_details(request, pk):
 
     if request.method == 'GET':

@@ -1,5 +1,7 @@
 from django.db import models
 from subcategory.models import SubCategory
+from category.models import Category
+
 # Create your models here.
 
 
@@ -10,12 +12,14 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
     subcategory = models.ForeignKey(
         SubCategory, on_delete=models.CASCADE, related_name="products")
+    # parentCategory = models.ForeignKey(
+    #     Category, on_delete=models.CASCADE, related_name="parentCategory")
 
     class Meta:
         verbose_name_plural = 'Products'
 
     def __str__(self):
-        return self.name
+        return self.name+"_"+self.subcategory.name+"_"+self.subcategory.category.name
 
 
 class Inventory(models.Model):
@@ -33,3 +37,8 @@ class Inventory(models.Model):
 
     class Meta:
         verbose_name_plural = 'Inventories'
+        # Add a unique constraint on the `color` and `sizes` fields
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'color', 'sizes'], name='unique_color_sizes')
+        ]

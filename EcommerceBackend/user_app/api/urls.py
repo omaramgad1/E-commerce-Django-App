@@ -6,9 +6,9 @@ urlpatterns = [
     path('profile/', profile_get, name='profile'),
     path('profile_update/', profile_update, name='profile_update'),
     path('change_password/', change_password, name='change_password'),
+    path('list/', get_users_pagination, name='get_users_pagination'),
     path('list-all/', get_all_users, name='get_all_users'),
     path('list-active/', get_active_users, name='get_all_users'),
-
     path('<int:user_id>/change_active_status/',
          change_user_active_status, name='change_user_active_status'),
     path('<int:user_id>/change_to_admin/', change_user_superuser_status,
