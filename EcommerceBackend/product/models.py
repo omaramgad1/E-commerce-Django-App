@@ -12,8 +12,6 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
     subcategory = models.ForeignKey(
         SubCategory, on_delete=models.CASCADE, related_name="products")
-    # parentCategory = models.ForeignKey(
-    #     Category, on_delete=models.CASCADE, related_name="parentCategory")
 
     class Meta:
         verbose_name_plural = 'Products'

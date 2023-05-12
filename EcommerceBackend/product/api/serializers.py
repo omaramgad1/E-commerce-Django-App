@@ -38,7 +38,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         subcategory_data = validated_data.pop('subcategory', None)
-        parent_category_name = (subcategory_data['category']['name'], None)
+        parent_category_name = subcategory_data['category']['name']
 
         # Update the fields on the product instance
         for key, value in validated_data.items():
