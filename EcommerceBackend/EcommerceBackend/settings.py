@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'user_app',
     'wishlist',
     # 'orderlist',
-    # 'cartlist',
+    'cartlist',
     'category',
     'subcategory',
     'product',
