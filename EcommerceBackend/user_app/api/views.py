@@ -36,7 +36,7 @@ def login(request):
             response['message'] = 'Login successful'
             return Response(response, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': serializer.errors}, status=status.HTTP_401_UNAUTHORIZED)
     else:
         return Response({'message': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 

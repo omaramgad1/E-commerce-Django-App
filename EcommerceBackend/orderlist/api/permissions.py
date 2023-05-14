@@ -26,4 +26,4 @@ class IsOwner(permissions.BasePermission):
         if obj.user == request.user:
             return True
         else:
-            raise PermissionDenied("You are not the owner of this Cart.")
+            raise PermissionDenied("You are not the owner of this OrderList.")
