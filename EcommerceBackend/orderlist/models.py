@@ -51,7 +51,7 @@ class PaymentToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     ptoken = models.CharField(max_length=32)
     status = models.BooleanField(default=True)
-    token = models.CharField(max_length=32)
+    token = models.CharField(max_length=100)
 
     def __str__(self):
         return f"{self.user.username}'s Payment Token"

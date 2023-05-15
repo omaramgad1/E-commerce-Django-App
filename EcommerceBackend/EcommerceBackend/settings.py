@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'user_app',
     'wishlist',
-    # 'orderlist',
+    'orderlist',
     'cartlist',
     'category',
     'subcategory',

@@ -22,7 +22,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 @api_view(['POST'])
-@permission_classes(['IsOwner'])
+# @permission_classes(['IsOwner'])
 def create_Checkout(request):
     user = User.objects.get(id=request.user.id)
     cart = Cart.objects.get(user=user)
@@ -37,7 +37,7 @@ def create_Checkout(request):
         inventory = Inventory.objects.get(
             product=cart_item.product,
             color=cart_item.color,
-            size=cart_item.size,
+            sizes=cart_item.size,
         )
         if not inventory:
             return Response({'error': f"Inventory not Found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -74,6 +74,7 @@ def create_Checkout(request):
             )
             pToken = PaymentToken(user=user, ptoken=token,
                                   status=True, token=checkout_session.id)
+            print(len(str(checkout_session.id)))
             pToken.save()
         except stripe.error.AuthenticationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -120,7 +121,7 @@ def create_order(request):
 
         user = User.objects.get(id=user_id)
         cart = Cart.objects.get(user=user)
-        # cart_items = CartItem.objects.filter(cart=cart)
+        cart_items = CartItem.objects.filter(cart=cart)
 
         # Get the user's order list
         order_list = OrderList.objects.get(user=user)
@@ -134,12 +135,12 @@ def create_order(request):
         )
 
         # Loop through the cart items and create order items
-        for cart_item in cart.items.all():
+        for cart_item in cart_items:
             # Get the inventory object for the product, color, and size
             inventory = Inventory.objects.get(
                 product=cart_item.product,
                 color=cart_item.color,
-                size=cart_item.size,
+                sizes=cart_item.size,
             )
             if not inventory:
                 return Response({'error': f"Inventory not Found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -175,7 +176,7 @@ def order_details(request, order_id):
     try:
         orderlist = OrderList.objects.get(user=user)
         order = Order.objects.get(orderlist=orderlist, id=order_id)
-        order_items = order.items.all()
+        order_items = OrderItem.objects.get(order=order)
         serialized_order_items = OrderItemSerializer(
             order_items, many=True).data
         serialized_order = OrderSerializer(order).data
@@ -190,8 +191,9 @@ def order_details(request, order_id):
 @permission_classes(['IsOwner'])
 def delete_order(request, order_id):
     order = Order.objects.get(id=order_id)
+    order_items = OrderItem.objects.get(order=order)
     if order.status.lower() == 'pending':
-        for order_item in order.items.all():
+        for order_item in order_items:
             inventory = Inventory.objects.get(
                 product=order_item.product,
                 color=order_item.color,
