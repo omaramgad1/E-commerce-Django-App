@@ -69,15 +69,17 @@ def create_Checkout(request):
                 payment_method_types=['card'],
                 line_items=line_items,
                 mode='payment',
-                success_url=f'{base_url}/order/create?token={token}&user={user.id}&session_id={{CHECKOUT_SESSION_ID}}&method={payment_method}&address={shipping_address}',
+                success_url=f'{base_url}/order/create/{token}/{user.id}/{{CHECKOUT_SESSION_ID}}/{payment_method}/{shipping_address}',
                 cancel_url=f'{base_url}/order/cancel?token={token}&user={user.id}',
             )
             pToken = PaymentToken(user=user, ptoken=token,
                                   status=True, token=checkout_session.id)
             print(len(str(checkout_session.id)))
+            print(checkout_session.url)
             pToken.save()
         except stripe.error.AuthenticationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        print(checkout_session.url)
         return redirect(checkout_session.url, code=303)
 
 
@@ -97,20 +99,21 @@ def cancel_order(request):
     return Response({'detail': 'Order cancelled successfully'})
 
 
-@api_view(['POST'])
-def create_order(request):
-    user_id = request.GET.get('user')
-    token = request.GET.get('token')
-    session_id = request.GET.get('session_id')
-    payment_method = request.get('method')
-    shipping_address = request.get('address')
-
+@api_view(['GET'])
+def create_order(request,user_id,token,session_id,method,address):
+    # user_id = request.GET.get('user')
+    # token = request.GET.get('token')
+    # session_id = request.GET.get('session_id')
+    # payment_method = request.GET.get('method')
+    # shipping_address = request.GET.get('address')
+    user = User.objects.get(id=user_id)
+    print(method,address,session_id)
     with transaction.atomic():
-        if payment_method == 'cod' and not token:
+        if method == 'cod' and not token:
             pass
-        elif payment_method == 'credit' and token:
+        elif method == 'credit' and token:
             pToken = PaymentToken.objects.get(
-                user=user, Ptoken=token, token=session_id, status=True)
+                user=user, ptoken=token, token=session_id, status=True)
 
             if not pToken:
                 return Response({"error": "You are not authorized to perform this action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -129,9 +132,9 @@ def create_order(request):
         # Create the order
         order = Order.objects.create(
             orderList=order_list,
-            shipping_address=shipping_address,
+            shipping_address=address,
             status='pending',
-            payment_method=payment_method,
+            payment_method=method,
         )
 
         # Loop through the cart items and create order items
@@ -208,10 +211,11 @@ def delete_order(request, order_id):
 
 
 @api_view(['GET'])
-@permission_classes(['IsOwner'])
+# @permission_classes(['IsOwner'])
 def get_orderList(request):
     user = User.objects.get(id=request.user.id)
     orderlist = OrderList.objects.get(user=user)
+    print(orderlist)
     serialized_orderlist = OrderListSerializer(orderlist).data
     return Response({'data': serialized_orderlist}, status=status.HTTP_200_OK)
 
