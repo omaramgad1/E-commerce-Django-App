@@ -5,7 +5,7 @@ from ..models import SubCategory
 from .serializers import SubCategorySerializer
 from django.core.paginator import Paginator
 from rest_framework.permissions import IsAdminUser, AllowAny
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, renderer_classes
 
 
 @api_view(['GET'])
@@ -35,7 +35,7 @@ def SubCategory_list(request):
     if request.method == 'GET':
         categories = SubCategory.objects.all()
         serializer = SubCategorySerializer(categories, many=True)
-        return Response({'data': serializer.data})
+        return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -50,7 +50,7 @@ def SubCategory_details(request, pk):
             return Response({'error': 'SubCategory not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = SubCategorySerializer(subcategory)
-        return Response({'data': serializer.data})
+        return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -65,7 +65,7 @@ def SubCategory_Products(request, pk):
         products = []
         for item in serializer.data['products']:
             products.append(item)
-        return Response({'data': products})
+        return Response(products)
 
 
 @api_view(['POST'])
@@ -81,8 +81,8 @@ def SubCategory_Create(request):
         else:
             # if serializer.errors['category']:
             #     return Response({'error': serializer.errors['category']}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            # if serializer.errors['name']:
-            #     return Response({'error': serializer.errors['name']}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            if serializer.errors['name']:
+                return Response({'error': serializer.errors['name']}, status=status.HTTP_406_NOT_ACCEPTABLE)
             return Response({'error': serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
@@ -140,4 +140,4 @@ def SubCategory_delete(request, pk):
         if serializer.data['products'] != []:
             return Response({'error': 'subcategory Has products '}, status=status.HTTP_406_NOT_ACCEPTABLE)
         subcategory.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Category Deleted Successfuly"}, status=status.HTTP_200_OK)

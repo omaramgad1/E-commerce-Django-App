@@ -54,12 +54,10 @@ class SubCategorySerializer(serializers.ModelSerializer):
     #     return instance
     def update(self, instance, validated_data):
         category_name = validated_data.pop('category', {}).get('name')
-        print("1")
+
         if category_name:
-            print("2")
 
             try:
-                print("")
 
                 category = Category.objects.get(name=category_name)
                 instance.category = category
@@ -69,8 +67,12 @@ class SubCategorySerializer(serializers.ModelSerializer):
             except ObjectDoesNotExist:
                 raise serializers.ValidationError({'error':
                                                    "Category with name %s does not exist" % category_name})  # 400 bad request
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-        instance.save()
+        try:
+            for key, value in validated_data.items():
+                setattr(instance, key, value)
+            instance.save()
+        except IntegrityError:
+            message = f"A subcategory with name '{validated_data['name']}' already exists in category '{category_name}'."
+            raise serializers.ValidationError({'error': message})
 
         return instance

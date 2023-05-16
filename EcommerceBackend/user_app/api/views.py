@@ -39,7 +39,7 @@ def login(request):
         if serializer.is_valid():
             response = serializer.validated_data
             response['message'] = 'Login successful'
-            return Response({'data': response}, status=status.HTTP_200_OK)
+            return Response(response, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_401_UNAUTHORIZED)
     else:
@@ -51,7 +51,7 @@ def login(request):
 @renderer_classes([UserRenderer])
 def profile_get(request):
     serializer = UserProfileSerializer(request.user)
-    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])
@@ -62,7 +62,9 @@ def profile_update(request):
     serializer = UserUpdateSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+        # return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+        return Response({'message': 'Profile Updated Successfully'}, status=status.HTTP_200_OK)
+
     else:
         return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -93,7 +95,7 @@ def get_all_users(request):
     users = User.objects.exclude(id=user_to_exclude.id)
     # users = User.objects.all()
     serializer = UserProfileSerializer(users, many=True)
-    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -106,7 +108,7 @@ def get_user_details(request, user_id):
         return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = UserProfileSerializer(user)
-    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -116,7 +118,7 @@ def get_active_users(request):
     user_to_exclude = User.objects.get(id=request.user.id)
     users = User.objects.filter(is_active=True).exclude(id=user_to_exclude.id)
     serializer = UserProfileSerializer(users, many=True)
-    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -127,7 +129,7 @@ def get_superusers_users(request):
     users = User.objects.filter(
         is_superuser=True).exclude(id=user_to_exclude.id)
     serializer = UserProfileSerializer(users, many=True)
-    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

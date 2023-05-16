@@ -35,7 +35,7 @@ def product_list(request):
     if request.method == 'GET':
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
-        return Response({'data': serializer.data})
+        return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -48,7 +48,7 @@ def product_details(request, pk):
             return Response({'error': 'product not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = ProductSerializer(product)
-        return Response({'data': serializer.data})
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
@@ -60,8 +60,10 @@ def create_product(request):
             serializer.save()
             return Response({'message': 'product Created Successfuly'}, status=status.HTTP_201_CREATED)
         else:
-            # return Response({'error': serializer.errors['name']}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+            errors = {}
+            for field, message in serializer.errors.items():
+                errors[field] = message[0]
+            return Response({'error': errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 @api_view(['PUT'])
@@ -79,8 +81,10 @@ def product_update(request, pk):
             serializer.save()
             return Response({'message': 'Product Upateded Successfuly'}, status=status.HTTP_200_OK)
         else:
-            # return Response({'error': serializer.errors['name']}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            return Response({'error': serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            errors = {}
+            for field, message in serializer.errors.items():
+                errors[field] = message[0]
+            return Response({'error': errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 @api_view(['DELETE'])
@@ -92,9 +96,6 @@ def product_delete(request, pk):
         except Product.DoesNotExist:
             return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # serializer = ProductSerializer(category)
-        # if serializer.data['subcategories'] != []:
-        #     return Response({'error': 'Category Has SubCategories '}, status=status.HTTP_406_NOT_ACCEPTABLE)
         product.delete()
         return Response({'message': "Product Deleted Successfully"}, status=status.HTTP_200_OK)
 
@@ -106,7 +107,7 @@ def get_inventories(request):
     if request.method == 'GET':
         inventory = Inventory.objects.all()
         serializer = InventorySerializer(inventory, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -120,7 +121,7 @@ def get_product_inventory(request, product_id):
 
         inventory = Inventory.objects.filter(product=product)
         serializer = InventorySerializer(inventory, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -133,7 +134,7 @@ def get_inventory_colors_for_product(request, product_id):
 
     colors = Inventory.objects.filter(
         product_id=product_id).values_list('color', flat=True).distinct()
-    return Response({'data': {'colors': colors}}, status=status.HTTP_200_OK)
+    return Response({'colors': colors}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -146,26 +147,37 @@ def get_inventory_sizes_for_product(request, product_id):
 
     sizes = Inventory.objects.filter(product_id=product_id).values_list(
         'sizes', flat=True).distinct()
-    return Response({'data': {'sizes': sizes}}, status=status.HTTP_200_OK)
+    return Response({'sizes': sizes}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_sizes_for_product_and_color(request, product_id, color):
+
     try:
         Product.objects.get(id=product_id)
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    inventory = Inventory.objects.filter(product_id=product_id, color=color)
+    colors = Inventory.objects.filter(
+        product_id=product_id).values_list('color', flat=True).distinct()
+
+    color = color.replace(' ', '').strip().lower()
+
+    if color in [c.strip().lower() for c in colors]:
+        inventory = Inventory.objects.filter(
+            product_id=product_id, color=color)
+    else:
+        return Response({'error': 'Product color not found'}, status=status.HTTP_404_NOT_FOUND)
 
     sizes = set(inventory.values_list('sizes', flat=True))
-    return Response({'data': {'sizes': list(sizes)}})
+    return Response({'sizes': list(sizes)})
 
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_quantity_for_product_color_and_size(request, product_id, color, size):
+
     try:
         Product.objects.get(id=product_id)
     except Product.DoesNotExist:
@@ -175,12 +187,16 @@ def get_quantity_for_product_color_and_size(request, product_id, color, size):
         product_id=product_id).values_list('color', flat=True).distinct()
     sizes = Inventory.objects.filter(product_id=product_id).values_list(
         'sizes', flat=True).distinct()
-    if color in colors:
-        if size.upper() in sizes:
+
+    color = color.replace(' ', '').strip().lower()
+    size = size.replace(' ', '').strip().upper()
+
+    if color in [c.strip().lower() for c in colors]:
+        if size in [s.strip().upper() for s in sizes]:
             inventory = Inventory.objects.filter(
                 product_id=product_id, color=color, sizes=size.upper())
             quantity = sum([inv.quantity for inv in inventory])
-            return Response({'data': {'quantity': quantity}})
+            return Response({'quantity': quantity})
         else:
             return Response({'error': 'Product size not found'}, status=status.HTTP_404_NOT_FOUND)
     else:
