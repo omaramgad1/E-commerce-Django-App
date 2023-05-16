@@ -3,12 +3,14 @@ from ..models import User
 from .serializers import RegistrationSerializer, LoginSerializer, UserProfileSerializer, UserUpdateSerializer, ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.paginator import Paginator
-
+from ..renderers import UserRenderer
 
 # Generate Token Manually
+
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
@@ -23,8 +25,10 @@ def register(request):
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        token = get_tokens_for_user(user)
-        return Response({'token': token, 'msg': 'Registration Successful'}, status=status.HTTP_201_CREATED)
+        # token = get_tokens_for_user(user)
+        # print(token)
+        # return Response({'token': token['access'], 'message': 'Registration Successful'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Registration Successful'}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
@@ -34,7 +38,7 @@ def login(request):
         if serializer.is_valid():
             response = serializer.validated_data
             response['message'] = 'Login successful'
-            return Response(response, status=status.HTTP_200_OK)
+            return Response({'data': response}, status=status.HTTP_200_OK)
         else:
             return Response({'error': serializer.errors}, status=status.HTTP_401_UNAUTHORIZED)
     else:
@@ -43,25 +47,28 @@ def login(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@renderer_classes([UserRenderer])
 def profile_get(request):
     serializer = UserProfileSerializer(request.user)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
+@renderer_classes([UserRenderer])
 def profile_update(request):
     user = request.user
     serializer = UserUpdateSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@renderer_classes([UserRenderer])
 def change_password(request):
     serializer = ChangePasswordSerializer(data=request.data)
     if serializer.is_valid():
@@ -71,32 +78,66 @@ def change_password(request):
             return Response({'error': 'Wrong password'}, status=status.HTTP_400_BAD_REQUEST)
         user.set_password(serializer.validated_data['new_password'])
         user.save()
-        return Response({'msg': 'Password changed successfully'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
 def get_all_users(request):
-    users = User.objects.all()
+    # Replace with the user ID to exclude
+    user_to_exclude = User.objects.get(id=request.user.id)
+    users = User.objects.exclude(id=user_to_exclude.id)
+    # users = User.objects.all()
     serializer = UserProfileSerializer(users, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
+def get_user_details(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserProfileSerializer(user)
+    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
 def get_active_users(request):
-    users = User.objects.filter(is_active=True)
+    user_to_exclude = User.objects.get(id=request.user.id)
+    users = User.objects.filter(is_active=True).exclude(id=user_to_exclude.id)
     serializer = UserProfileSerializer(users, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
+def get_superusers_users(request):
+    user_to_exclude = User.objects.get(id=request.user.id)
+    users = User.objects.filter(
+        is_superuser=True).exclude(id=user_to_exclude.id)
+    serializer = UserProfileSerializer(users, many=True)
+    return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
 def get_users_pagination(request):
     if request.method == 'GET':
-        queryset = User.objects.all()
+        user_to_exclude = User.objects.get(id=request.user.id)
+
+        queryset = User.objects.filter(
+            is_active=True).exclude(id=user_to_exclude.id)
         queryset_len = User.objects.all().count()
         limit = request.GET.get('limit', 10)
         page = request.GET.get('page', 1)
@@ -115,6 +156,7 @@ def get_users_pagination(request):
 
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
 def change_user_active_status(request, user_id):
     try:
         user = User.objects.get(id=user_id)
@@ -126,13 +168,14 @@ def change_user_active_status(request, user_id):
         user.is_active = is_active
         user.save()
         serializer = UserProfileSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'is_active field is required'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
+@renderer_classes([UserRenderer])
 def change_user_superuser_status(request, user_id):
     try:
         user = User.objects.get(id=user_id)
@@ -144,7 +187,7 @@ def change_user_superuser_status(request, user_id):
         user.is_superuser = is_superuser
         user.save()
         serializer = UserProfileSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'data': serializer.data}, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'is_superuser field is required'}, status=status.HTTP_400_BAD_REQUEST)
 
