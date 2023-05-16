@@ -10,6 +10,8 @@ urlpatterns = [
 
 
     path('register/', register, name='register'),
+    path('login/', login, name='login'),
+
     path('profile/', profile_get, name='profile'),
     path('profile_update/', profile_update, name='profile_update'),
     path('change_password/', change_password, name='change_password'),
@@ -18,15 +20,9 @@ urlpatterns = [
     path('list-active/', get_active_users, name='get_active_users'),
     path('list-admins/', get_superusers_users, name='get_superusers_users'),
 
-
-
     # path("jwt/create/", TokenObtainPairView.as_view(), name="jwt_create"),
-
-
-    path('login/', login, name='login'),
-    path("jwt/refresh/", TokenRefreshView.as_view(), name="jwt_refresh"),
-    path("jwt/verify/", TokenVerifyView.as_view(), name="jwt_verify"),
-
+    # path("jwt/refresh/", TokenRefreshView.as_view(), name="jwt_refresh"),
+    # path("jwt/verify/", TokenVerifyView.as_view(), name="jwt_verify"),
     path('<int:user_id>/change_active_status/',
          change_user_active_status, name='change_user_active_status'),
     path('<int:user_id>/',

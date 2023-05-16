@@ -30,7 +30,7 @@ def validate_image(image):
 
 def validate_date_of_birth(value):
     today = date.today()
-    age_limit = timedelta(days=365*18)
+    age_limit = timedelta(days=365*12)
     if value > today:
         raise ValidationError('Date of birth cannot be in the future.')
     elif today - value < age_limit:
@@ -87,8 +87,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=45, unique=True)
     email = models.EmailField(db_index=True, unique=True, max_length=254)
 
-    # validators=[validate_date_of_birth], null=True, blank=True
-    date_of_birth = models.DateField(null=True, blank=True)
+    # null=True, blank=True
+    date_of_birth = models.DateField(
+        null=True, blank=True,   validators=[validate_date_of_birth])
     phone = PhoneNumberField()
     profileImgUrl = models.ImageField(
         upload_to='profileImages/', blank=True)  # , validators=[validate_image]

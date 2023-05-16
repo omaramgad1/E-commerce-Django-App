@@ -91,6 +91,8 @@ def Category_Update(request, pk):
             category = Category.objects.get(pk=pk)
         except Category.DoesNotExist:
             return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+        if request.data.get('name').lower() == category.name.lower():
+            return Response({'error': 'you enterd the same name '}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         serializer = CategorySerializer(category, data=request.data)
         if serializer.is_valid():

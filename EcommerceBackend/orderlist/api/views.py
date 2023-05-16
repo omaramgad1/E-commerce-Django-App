@@ -14,7 +14,7 @@ import secrets
 from django.conf import settings
 from django.shortcuts import redirect
 from stripe.error import AuthenticationError
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 # from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
 
@@ -22,7 +22,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 @api_view(['POST'])
-# @permission_classes(['IsOwner'])
+@permission_classes([IsAuthenticated])
 def create_Checkout(request):
     user = User.objects.get(id=request.user.id)
     cart = Cart.objects.get(user=user)
@@ -100,14 +100,14 @@ def cancel_order(request):
 
 
 @api_view(['GET'])
-def create_order(request,user_id,token,session_id,method,address):
+def create_order(request, user_id, token, session_id, method, address):
     # user_id = request.GET.get('user')
     # token = request.GET.get('token')
     # session_id = request.GET.get('session_id')
     # payment_method = request.GET.get('method')
     # shipping_address = request.GET.get('address')
     user = User.objects.get(id=user_id)
-    print(method,address,session_id)
+    print(method, address, session_id)
     with transaction.atomic():
         if method == 'cod' and not token:
             pass
@@ -173,7 +173,7 @@ def create_order(request,user_id,token,session_id,method,address):
 
 
 @api_view(['GET'])
-@permission_classes(['IsOwner'])
+@permission_classes([IsOwner])
 def order_details(request, order_id):
     user = User.objects.get(id=request.user.id)
     try:
@@ -191,7 +191,7 @@ def order_details(request, order_id):
 
 
 @api_view(['DELETE'])
-@permission_classes(['IsOwner'])
+@permission_classes([IsOwner])
 def delete_order(request, order_id):
     order = Order.objects.get(id=order_id)
     order_items = OrderItem.objects.get(order=order)
@@ -211,7 +211,7 @@ def delete_order(request, order_id):
 
 
 @api_view(['GET'])
-# @permission_classes(['IsOwner'])
+@permission_classes([IsAuthenticated])
 def get_orderList(request):
     user = User.objects.get(id=request.user.id)
     orderlist = OrderList.objects.get(user=user)

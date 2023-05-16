@@ -73,6 +73,7 @@ def SubCategory_Products(request, pk):
 @permission_classes([IsAdminUser])
 def SubCategory_Create(request):
     if request.method == 'POST':
+
         serializer = SubCategorySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -80,9 +81,9 @@ def SubCategory_Create(request):
         else:
             # if serializer.errors['category']:
             #     return Response({'error': serializer.errors['category']}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            if serializer.errors['name']:
-                return Response({'error': serializer.errors['name']}, status=status.HTTP_406_NOT_ACCEPTABLE)
-            return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+            # if serializer.errors['name']:
+            #     return Response({'error': serializer.errors['name']}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({'error': serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 @api_view(['PUT'])

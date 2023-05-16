@@ -22,9 +22,8 @@ def get_cart(request):
     return Response({'data': serializer.data})
 
 
-
 @api_view(['POST'])
-@permission_classes([IsOwner])
+@permission_classes([IsAuthenticated])
 def add_cart_item(request, product_id):
     try:
         # Get the product and inventory item
@@ -32,30 +31,32 @@ def add_cart_item(request, product_id):
     except Product.DoesNotExist:
         # Get the inventory object
         message = "This product does not exist"
-        return Response({'failed':message})
-    
+        return Response({'failed': message})
+
     color = request.POST.get('color')
     size = request.POST.get('size')
     quantity = int(request.POST.get('quantity'))
     try:
-        inventory =Inventory.objects.get(product=product, color=color, sizes=size)
+        inventory = Inventory.objects.get(
+            product=product, color=color, sizes=size)
     except Inventory.DoesNotExist:
         message = "This product has no inventory"
-        return Response({'failed':message})
-    
+        return Response({'failed': message})
+
     if inventory.quantity < quantity:
         message = f"Sorry, there's not enough inventory for this product with color {color} and size {size}."
-        return Response({'failed':message}) 
-    
+        return Response({'failed': message})
+
     cart = Cart.objects.get(user=request.user)
 
     # Create a new cart item and add it to the cart
     cart_item, created = CartItem.objects.get_or_create(
-        cart=cart, product=product, size=request.POST.get('size'), color=request.POST.get('color'),quantity=quantity)
+        cart=cart, product=product, size=request.POST.get('size'), color=request.POST.get('color'), quantity=quantity)
     cart_item.save()
 
     # Return a JSON response indicating success
     return Response({'success': True})
+
 
 @api_view(['PUT'])
 @permission_classes([IsOwner])
@@ -67,8 +68,8 @@ def update_cart_item(request, item_id):
     new_quantity = int(request.data.get('quantity'))
     if inventory_item.quantity < new_quantity:
         message = f"Sorry, there's not enough inventory for this product with color {cart_item.color} and size {cart_item.size}."
-        return Response({'failed':message}) 
-    
+        return Response({'failed': message})
+
     # Get the user's cart or create a new one if it doesn't exist
     cart = Cart.objects.get(user=request.user)
 

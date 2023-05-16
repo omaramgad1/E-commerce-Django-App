@@ -133,7 +133,7 @@ def get_inventory_colors_for_product(request, product_id):
 
     colors = Inventory.objects.filter(
         product_id=product_id).values_list('color', flat=True).distinct()
-    return Response(colors, status=status.HTTP_200_OK)
+    return Response({'data': {'colors': colors}}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
@@ -146,7 +146,7 @@ def get_inventory_sizes_for_product(request, product_id):
 
     sizes = Inventory.objects.filter(product_id=product_id).values_list(
         'sizes', flat=True).distinct()
-    return Response(sizes, status=status.HTTP_200_OK)
+    return Response({'data': {'sizes': sizes}}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -160,7 +160,7 @@ def get_sizes_for_product_and_color(request, product_id, color):
     inventory = Inventory.objects.filter(product_id=product_id, color=color)
 
     sizes = set(inventory.values_list('sizes', flat=True))
-    return Response({'data': list(sizes)})
+    return Response({'data': {'sizes': list(sizes)}})
 
 
 @api_view(["GET"])

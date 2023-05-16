@@ -20,6 +20,7 @@ def get_tokens_for_user(user):
 
 
 @api_view(['POST'])
+@renderer_classes([UserRenderer])
 def register(request):
     if request.method == 'POST':
         serializer = RegistrationSerializer(data=request.data)
