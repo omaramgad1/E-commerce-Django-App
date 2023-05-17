@@ -14,5 +14,7 @@ urlpatterns = [
     path('updateStatus/<int:order_id>/',
          update_order_status, name="update_order_status"),
     path('all/', get_all_orders, name="get_all_orders"),
+    path('all_search/', OrderSearchView.as_view(), name="OrderSearchView"),
+
 
 ]

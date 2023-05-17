@@ -6,6 +6,15 @@ from .serializers import ProductSerializer, InventorySerializer
 from django.core.paginator import Paginator
 from rest_framework.permissions import IsAdminUser, AllowAny
 from django.db import IntegrityError
+from rest_framework import generics
+from rest_framework import filters
+
+
+class ProductSearchView(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description']
 
 
 @api_view(['GET'])

@@ -14,7 +14,7 @@ urlpatterns = [
     path('<int:pk>/', product_details, name='product_details'),
 
 
-
+    path('list_search/', ProductSearchView.as_view(), name='ProductSearch-list'),
 
     path('<int:product_id>/add_inventory/',
          add_inventory_to_product, name='get_product_inventory'),

@@ -17,6 +17,17 @@ from stripe.error import AuthenticationError
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 # from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
+from rest_framework import generics
+from rest_framework import filters
+
+
+class OrderSearchView(generics.ListAPIView):
+    queryset = Order.objects.all()
+    permission_classes = [IsAdminUser]
+    serializer_class = OrderSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['id', 'orderList__user__username']
+
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
