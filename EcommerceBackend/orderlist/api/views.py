@@ -14,21 +14,36 @@ import secrets
 from django.conf import settings
 from django.shortcuts import redirect
 from stripe.error import AuthenticationError
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 # from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
+from rest_framework import generics
+from rest_framework import filters
+
+
+class OrderSearchView(generics.ListAPIView):
+    queryset = Order.objects.all()
+    permission_classes = [IsAdminUser]
+    serializer_class = OrderSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['id', 'orderList__user__username']
+
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 @api_view(['POST'])
-# @permission_classes(['IsOwner'])
+@permission_classes([IsAuthenticated])
 def create_Checkout(request):
     user = User.objects.get(id=request.user.id)
     cart = Cart.objects.get(user=user)
     cart_items = CartItem.objects.filter(cart=cart)
     payment_method = request.data.get('payment_method')
     shipping_address = request.data.get('shipping_address')
+
+    if not payment_method and not shipping_address:
+        return Response({"error": "invalid data, please send payment_method and  shipping_address correct"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
     base_url = request.scheme + '://' + request.get_host()
     # validation before checkout
     if not cart_items:
@@ -45,7 +60,8 @@ def create_Checkout(request):
             return Response({'error': f"Sorry, we do not have enough stock for {cart_item.product.name}"}, status=status.HTTP_400_BAD_REQUEST)
 
     if payment_method == 'cod':
-        return redirect(f'{base_url}/order/create?user={user.id}&method={payment_method}&address={shipping_address}', code=303)
+        return redirect(f'{base_url}/order/create/{None}/{user.id}/{None}/{payment_method}/{shipping_address}', code=303)
+
     elif payment_method == 'credit':
         line_items = []
         for item in cart_items:
@@ -100,16 +116,11 @@ def cancel_order(request):
 
 
 @api_view(['GET'])
-def create_order(request,user_id,token,session_id,method,address):
-    # user_id = request.GET.get('user')
-    # token = request.GET.get('token')
-    # session_id = request.GET.get('session_id')
-    # payment_method = request.GET.get('method')
-    # shipping_address = request.GET.get('address')
+def create_order(request, user_id, token, session_id, method, address):
+
     user = User.objects.get(id=user_id)
-    print(method,address,session_id)
     with transaction.atomic():
-        if method == 'cod' and not token:
+        if method == 'cod':
             pass
         elif method == 'credit' and token:
             pToken = PaymentToken.objects.get(
@@ -169,64 +180,73 @@ def create_order(request,user_id,token,session_id,method,address):
         order_list.orders.add(order)
         order_list.save()
     # Serialize and return the updated cart
-    return Response({'message': "done"}, status=status.HTTP_201_CREATED)
+    return Response({'message': "Order Created Successfully"}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
-@permission_classes(['IsOwner'])
+@permission_classes([IsOwner])
 def order_details(request, order_id):
     user = User.objects.get(id=request.user.id)
     try:
         orderlist = OrderList.objects.get(user=user)
-        order = Order.objects.get(orderlist=orderlist, id=order_id)
-        order_items = OrderItem.objects.get(order=order)
-        serialized_order_items = OrderItemSerializer(
-            order_items, many=True).data
+        order = Order.objects.get(orderList=orderlist, id=order_id)
+        # order_items = OrderItem.objects.filter(order=order)
+        # serialized_order_items = OrderItemSerializer(
+        #     order_items, many=True).data
         serialized_order = OrderSerializer(order).data
-        return Response({'data': {'order': serialized_order,
-                                  'items': serialized_order_items}},
+        return Response({'order': serialized_order},
+                        #   'items': serialized_order_items}},
                         status=status.HTTP_200_OK)
     except Order.DoesNotExist:
         return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['DELETE'])
-@permission_classes(['IsOwner'])
+@permission_classes([IsOwner])
 def delete_order(request, order_id):
     order = Order.objects.get(id=order_id)
-    order_items = OrderItem.objects.get(order=order)
+    order_items = OrderItem.objects.filter(order=order)
     if order.status.lower() == 'pending':
         for order_item in order_items:
             inventory = Inventory.objects.get(
                 product=order_item.product,
                 color=order_item.color,
-                size=order_item.size,
+                sizes=order_item.size,
             )
-            inventory.quantity += order_item.quantity
+            inventory.quantity = inventory.quantity + order_item.quantity
+            inventory.save()
             order_item.delete()
         order.delete()
-        return Response({'data': {'message': 'Order deleted successfully'}}, status=status.HTTP_200_OK)
+        return Response({'message': 'Order deleted successfully'}, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Cannot delete order with status other than "pending".'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
-# @permission_classes(['IsOwner'])
+@permission_classes([IsAuthenticated])
 def get_orderList(request):
     user = User.objects.get(id=request.user.id)
     orderlist = OrderList.objects.get(user=user)
     print(orderlist)
     serialized_orderlist = OrderListSerializer(orderlist).data
-    return Response({'data': serialized_orderlist}, status=status.HTTP_200_OK)
+    return Response(serialized_orderlist, status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
 def update_order_status(request, order_id):
-    status = request.data.get('status')
-    if status.lower() not in ['pending', 'shipped', 'delivered']:
+    statuss = request.data.get('status')
+    if statuss.lower() not in ['pending', 'shipped', 'delivered']:
         return Response({'error': 'Invalid Status'}, status=status.HTTP_400_BAD_REQUEST)
     order = get_object_or_404(Order, id=order_id)
-    order.status = status
+    order.status = statuss
     order.save()
-    return Response({'message': 'Order Status Changed to {status}'}, status=status.HTTP_200_OK)
+    return Response({'message': f'Order Status Changed to {statuss}'}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_all_orders(request):
+    orders = Order.objects.all()
+    serialized_orders = OrderSerializer(orders, many=True).data
+    return Response(serialized_orders, status=status.HTTP_200_OK)

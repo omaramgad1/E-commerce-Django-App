@@ -63,8 +63,10 @@ class LoginSerializer(serializers.Serializer):
                 refresh = RefreshToken.for_user(user)
                 return {
                     'is_admin': user.is_superuser,
-                    'access_token': str(refresh.access_token),
-                    'refresh_token': str(refresh),
+                    'token': str(refresh.access_token),
+
+                    # 'access_token': str(refresh.access_token),
+                    # 'refresh_token': str(refresh),
                 }
             else:
                 raise serializers.ValidationError(
@@ -75,10 +77,15 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    # isAdmin = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ('id', 'email', 'first_name', 'last_name',
                   'date_of_birth', 'phone', 'profileImgUrl')
+
+    # def get_isAdmin(self, obj):
+    #     return obj.is_superuser
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

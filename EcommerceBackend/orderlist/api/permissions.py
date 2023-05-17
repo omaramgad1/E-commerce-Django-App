@@ -12,6 +12,9 @@ class IsOwner(permissions.BasePermission):
         """
         Check if the requesting user is authenticated.
         """
+        # print("hello")
+        print(request.user)
+        # print(obj)
         if request.user.is_authenticated:
             return True
 
@@ -19,11 +22,16 @@ class IsOwner(permissions.BasePermission):
             raise PermissionDenied(
                 "You must be authenticated to access this resource.")
 
-    def has_object_permission(self, request, view, obj):
-        """
-        Check if the requesting user is the owner of the review.
-        """
-        if obj.user == request.user:
-            return True
-        else:
-            raise PermissionDenied("You are not the owner of this OrderList.")
+    # def has_object_permission(self, request, view, obj):
+    #     """
+    #     Check if the requesting user is the owner of the review.
+    #     """
+    #     # print(obj.user == request.user)
+
+    #     # print(obj)
+    #     # print(self)
+    #     if obj.user == request.user:
+    #         print("sddsds")
+    #         return True
+    #     else:
+    #         raise PermissionDenied("You are not the owner of this OrderList.")

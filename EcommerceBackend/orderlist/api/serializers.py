@@ -14,13 +14,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = '__all__'
+        # fields = '__all__'
+        exclude = ('items',)
 
     def get_total(self, obj):
         return sum(item.quantity * item.product.price for item in obj.orderItems.all())
 
 
 class OrderListSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source='user.username')
     orders = OrderSerializer(many=True, read_only=True)
 
     class Meta:

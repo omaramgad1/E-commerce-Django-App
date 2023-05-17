@@ -48,17 +48,12 @@ class ProductSerializer(serializers.ModelSerializer):
         if subcategory_data:
             subcategory_name = subcategory_data.get('name')
             if subcategory_name:
+                parent_category = Category.objects.get(
+                    name=parent_category_name)
                 # Look up the subcategory by name and parent category
-                subcategory, _ = SubCategory.objects.get_or_create(
-                    name=subcategory_name, category=instance.subcategory.category)
+                subcategory, created = SubCategory.objects.get_or_create(
+                    name=subcategory_name, category=parent_category)
                 instance.subcategory = subcategory
-
-        # Update the parent category if provxided
-        if parent_category_name:
-            # Look up the parent category by name
-            parent_category, _ = Category.objects.get_or_create(
-                name=parent_category_name)
-            instance.subcategory.category = parent_category
 
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get(

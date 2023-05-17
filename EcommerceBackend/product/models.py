@@ -40,3 +40,6 @@ class Inventory(models.Model):
             models.UniqueConstraint(
                 fields=['product', 'color', 'sizes'], name='unique_color_sizes')
         ]
+
+    def __str__(self):
+        return self.product.name+"_"+self.product.subcategory.name+"_"+self.product.subcategory.category.name + "_Inventory_" + str(self.pk)

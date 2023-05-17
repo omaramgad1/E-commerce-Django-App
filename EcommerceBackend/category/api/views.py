@@ -36,7 +36,7 @@ def Category_list(request):
     if request.method == 'GET':
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
-        return Response({'data': serializer.data})
+        return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -53,7 +53,7 @@ def Category_Products(request, pk):
             for item2 in item['products']:
                 products.append(item2)
 
-        return Response({'data': products})
+        return Response(products)
 
 
 @api_view(['GET'])
@@ -68,7 +68,27 @@ def Category_details(request, pk):
             return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = CategorySerializer(category)
-        return Response({'data': serializer.data})
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def Category_subcategories(request, pk):
+
+    if request.method == 'GET':
+
+        try:
+            category = Category.objects.get(pk=pk)
+        except Category.DoesNotExist:
+            return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CategorySerializer(category)
+
+        subcategories_names = []
+        for item in serializer.data['subcategories']:
+            subcategories_names.append(item['name'])
+
+        return Response(subcategories_names)
 
 
 @api_view(['POST'])
@@ -91,6 +111,8 @@ def Category_Update(request, pk):
             category = Category.objects.get(pk=pk)
         except Category.DoesNotExist:
             return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+        if request.data.get('name').lower() == category.name.lower():
+            return Response({'error': 'you enterd the same name '}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         serializer = CategorySerializer(category, data=request.data)
         if serializer.is_valid():
