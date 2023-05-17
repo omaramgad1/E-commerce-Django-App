@@ -5,6 +5,7 @@ from PIL import Image
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
 # Create your CustomUserManager here.
+from django.utils.translation import gettext_lazy as _
 
 
 def validate_image(image):
@@ -15,12 +16,6 @@ def validate_image(image):
     max_size = 5 * 1024 * 1024  # 5 MB
     if image.size > max_size:
         raise ValidationError('Image size should be less than 5MB.')
-
-    # Check the image size
-    max_dimensions = (1000, 1000)
-    if img.size[0] > max_dimensions[0] or img.size[1] > max_dimensions[1]:
-        raise ValidationError(
-            f'Image dimensions should be no greater than {max_dimensions[0]}x{max_dimensions[1]} pixels.')
 
     # Check the file format
     allowed_formats = ('jpeg', 'jpg', 'png', 'gif')
@@ -34,7 +29,7 @@ def validate_date_of_birth(value):
     if value > today:
         raise ValidationError('Date of birth cannot be in the future.')
     elif today - value < age_limit:
-        raise ValidationError('You must be at least 18 years old to register.')
+        raise ValidationError('You must be at least 12 years old to register.')
 
 
 class CustomUserManager(BaseUserManager):
@@ -92,7 +87,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True, blank=True,   validators=[validate_date_of_birth])
     phone = PhoneNumberField()
     profileImgUrl = models.ImageField(
-        upload_to='profileImages/', blank=True)  # , validators=[validate_image]
+        upload_to='profileImages/', blank=True, validators=[validate_image])  #
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -115,3 +110,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def clean(self):
+        super().clean()
+        if self._password:
+            self.validate_password(self._password)
+
+    def validate_password(self, password):
+        # Add your custom password validation logic here
+        if len(password) < 8:
+            raise ValidationError(
+                _('Password must be at least 8 characters long.'))

@@ -167,7 +167,7 @@ CORS_ORIGIN_WHITELIST = [
 
 
 REST_FRAMEWORK = {
-    "NON_FIELD_ERRORS_KEY": "errors",
+    # "NON_FIELD_ERRORS_KEY": "errors",
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -180,8 +180,6 @@ AUTH_USER_MODEL = "user_app.user"
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':   timedelta(days=36500),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=10),
-    # 'ROTATE_REFRESH_TOKENS': True,
-    # 'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,

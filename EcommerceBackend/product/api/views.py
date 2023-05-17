@@ -4,8 +4,8 @@ from rest_framework import status
 from ..models import Product, Inventory
 from .serializers import ProductSerializer, InventorySerializer
 from django.core.paginator import Paginator
-from django.core.paginator import Paginator
 from rest_framework.permissions import IsAdminUser, AllowAny
+from django.db import IntegrityError
 
 
 @api_view(['GET'])
@@ -213,10 +213,17 @@ def add_inventory_to_product(request, product_id):
 
     serializer = InventorySerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save(product=product)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            message = f"A inventory with color : '{serializer.validated_data['color']}' and size '{serializer.validated_data['sizes']}' already exists for product '{product.name}'."
+            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        errors = {}
+        for field, message in serializer.errors.items():
+            errors[field] = message[0]
+        return Response({'error': errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 @api_view(['PUT'])
@@ -235,10 +242,17 @@ def update_inventory_for_product(request, product_id, inventory_id):
     serializer = InventorySerializer(
         inventory, data=request.data, partial=True)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            message = f"A inventory with color : '{serializer.validated_data['color']}' and size '{serializer.validated_data['sizes']}' already exists for product '{product.name}'."
+            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
     else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        errors = {}
+        for field, message in serializer.errors.items():
+            errors[field] = message[0]
+        return Response({'error': errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 @api_view(['DELETE'])
