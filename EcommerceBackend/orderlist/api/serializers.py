@@ -3,9 +3,22 @@ from ..models import OrderList, Order, OrderItem
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.ReadOnlyField(source='product.name')
+    product_price = serializers.ReadOnlyField(source='product.price')
+    product_image_url = serializers.ImageField(
+        source='product.imageUrl', read_only=True)
+    total = serializers.SerializerMethodField()
+
     class Meta:
         model = OrderItem
-        fields = '__all__'
+        fields = ('id', 'order', 'product', 'product_name', 'product_price',
+                  'product_image_url', 'quantity', 'size', 'color', 'total')
+
+    def get_total(self, obj):
+        """
+        Calculate the total price for the order item based on its quantity and product price.
+        """
+        return obj.quantity * obj.product.price
 
 
 class OrderSerializer(serializers.ModelSerializer):
