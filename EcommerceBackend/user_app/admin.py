@@ -24,7 +24,7 @@ class UserModelAdmin(BaseUserAdmin):
             'fields': ('email', 'username', 'first_name', 'last_name', 'date_of_birth', 'phone', 'profileImgUrl', 'password1', 'password2'),
         }),
     )
-    search_fields = ('email',)
+    search_fields = ('email', 'username',)
     ordering = ('email', 'id')
     filter_horizontal = ()
 
