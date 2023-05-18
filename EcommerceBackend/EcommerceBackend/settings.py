@@ -92,23 +92,23 @@ WSGI_APPLICATION = 'EcommerceBackend.wsgi.application'
 # }
 
 # Database postgresql
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('DB_NAME_LOCAL'),
-        'USER': env('USER_LOCAL_DB'),
-        'PASSWORD': env('PASSWORD_LOCAL_DB'),
-        'HOST': env('HOST_LOCAL_DB'),
-        'PORT': env('PORT_LOCAL_DB'),
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': env('DB_NAME_LOCAL'),
+#         'USER': env('USER_LOCAL_DB'),
+#         'PASSWORD': env('PASSWORD_LOCAL_DB'),
+#         'HOST': env('HOST_LOCAL_DB'),
+#         'PORT': env('PORT_LOCAL_DB'),
+#     }
+# }
 
 
 # Render postgresql live database
 
-# DATABASES = {
-#     'default': dj_database_url.parse(env('DATABASE_URL'))
-# }
+DATABASES = {
+    'default': dj_database_url.parse(env('DATABASE_URL'))
+}
 
 
 # Password validation
