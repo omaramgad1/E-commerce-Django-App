@@ -1,6 +1,8 @@
+from django.forms import ValidationError
 from rest_framework import serializers
 from ..models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.password_validation import validate_password
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -23,25 +25,16 @@ class RegistrationSerializer(serializers.ModelSerializer):
         if password != password2:
             raise serializers.ValidationError(
                 "Password and Confirm Password doesn't match")
+            # Custom password validation
+        if len(password) < 8:
+            raise serializers.ValidationError(
+                {"password": "Password must be at least 8 characters long."})
+
+        if password.isnumeric():
+            raise serializers.ValidationError(
+                {"password": "Password cannot contain only numeric characters."})
+
         return attrs
-
-    # def save(self):
-
-    #     password = self.validated_data['password']
-    #     password2 = self.validated_data['password2']
-
-    #     if password != password2:
-    #         raise serializers.ValidationError(
-    #             {'error':  "Password and Confirm Password doesn't match"})
-
-    #     if User.objects.filter(email=self.validated_data['email']).exists():
-    #         raise serializers.ValidationError(
-    #             {'error': 'Email already exists!'})
-
-    #     account = User(
-    #         email=self.validated_data['email'], username=self.validated_data['username'])
-    #     account.set_password(password)
-    #     account.save()
 
     def create(self, validate_data):
         return User.objects.create_user(**validate_data)
@@ -77,15 +70,11 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    # isAdmin = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('id', 'email', 'first_name', 'last_name',
                   'date_of_birth', 'phone', 'profileImgUrl')
-
-    # def get_isAdmin(self, obj):
-    #     return obj.is_superuser
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

@@ -15,7 +15,7 @@ class OrderList(models.Model):
 class Order(models.Model):
     orderList = models.ForeignKey(
         OrderList, on_delete=models.CASCADE, related_name="orders")
-    items = models.ManyToManyField(Product, through='OrderItem')
+    # items = models.ManyToManyField(Product, through='OrderItem')
     shipping_address = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     shipped_time = models.DateTimeField(null=True, blank=True)

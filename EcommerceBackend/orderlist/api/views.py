@@ -1,21 +1,19 @@
+import stripe
+import secrets
+from django.conf import settings
 from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from user_app.models import User
-from product.models import Product, Inventory
+from product.models import Inventory
 from ..models import Order, OrderList, OrderItem, PaymentToken
-from .serializers import OrderItemSerializer, OrderSerializer, OrderListSerializer
+from .serializers import OrderSerializer, OrderListSerializer
 from rest_framework.decorators import api_view, permission_classes
 from .permissions import IsOwner
 from cartlist.models import Cart, CartItem
-import stripe
-import secrets
-from django.conf import settings
 from django.shortcuts import redirect
-from stripe.error import AuthenticationError
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
-# from django.core.paginator import Paginator
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework import filters
@@ -52,7 +50,7 @@ def create_Checkout(request):
         inventory = Inventory.objects.get(
             product=cart_item.product,
             color=cart_item.color,
-            sizes=cart_item.size,
+            size=cart_item.size,
         )
         if not inventory:
             return Response({'error': f"Inventory not Found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -154,7 +152,7 @@ def create_order(request, user_id, token, session_id, method, address):
             inventory = Inventory.objects.get(
                 product=cart_item.product,
                 color=cart_item.color,
-                sizes=cart_item.size,
+                size=cart_item.size,
             )
             if not inventory:
                 return Response({'error': f"Inventory not Found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -211,7 +209,7 @@ def delete_order(request, order_id):
             inventory = Inventory.objects.get(
                 product=order_item.product,
                 color=order_item.color,
-                sizes=order_item.size,
+                size=order_item.size,
             )
             inventory.quantity = inventory.quantity + order_item.quantity
             inventory.save()
@@ -230,6 +228,15 @@ def get_orderList(request):
     print(orderlist)
     serialized_orderlist = OrderListSerializer(orderlist).data
     return Response(serialized_orderlist, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_orders(request):
+    user = User.objects.get(id=request.user.id)
+    orderlist = OrderList.objects.get(user=user)
+    serialized_orderlist = OrderListSerializer(orderlist).data
+    return Response(serialized_orderlist["orders"], status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])

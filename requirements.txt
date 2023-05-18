@@ -11,6 +11,7 @@ django-cloudinary-storage==0.3.0
 django-cors-headers==3.14.0
 django-environ==0.10.0
 django-filter==23.2
+django-jazzmin==2.6.0
 django-phonenumber-field==7.1.0
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2

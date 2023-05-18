@@ -155,7 +155,7 @@ def get_inventory_sizes_for_product(request, product_id):
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
     sizes = Inventory.objects.filter(product_id=product_id).values_list(
-        'sizes', flat=True).distinct()
+        'size', flat=True).distinct()
     return Response({'sizes': sizes}, status=status.HTTP_200_OK)
 
 
@@ -179,42 +179,44 @@ def get_sizes_for_product_and_color(request, product_id, color):
     else:
         return Response({'error': 'Product color not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    sizes = set(inventory.values_list('sizes', flat=True))
+    sizes = set(inventory.values_list('size', flat=True))
     return Response({'sizes': list(sizes)})
 
 
-@api_view(["GET"])
+@api_view(['GET'])
 @permission_classes([AllowAny])
 def get_quantity_for_product_color_and_size(request, product_id, color, size):
-
     try:
-        Product.objects.get(id=product_id)
+        product = Product.objects.get(id=product_id)
     except Product.DoesNotExist:
         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
 
     colors = Inventory.objects.filter(
         product_id=product_id).values_list('color', flat=True).distinct()
     sizes = Inventory.objects.filter(product_id=product_id).values_list(
-        'sizes', flat=True).distinct()
+        'size', flat=True).distinct()
 
-    color = color.replace(' ', '').strip().lower()
-    size = size.replace(' ', '').strip().upper()
+    # Normalize the color and size parameters
+    color = color.strip().replace(' ', '_').lower()
+    size = size.strip().replace(' ', '_').upper()
 
-    if color in [c.strip().lower() for c in colors]:
-        if size in [s.strip().upper() for s in sizes]:
-            inventory = Inventory.objects.filter(
-                product_id=product_id, color=color, sizes=size.upper())
-            quantity = sum([inv.quantity for inv in inventory])
-            return Response({'quantity': quantity})
-        else:
-            return Response({'error': 'Product size not found'}, status=status.HTTP_404_NOT_FOUND)
-    else:
+    if color not in colors:
         return Response({'error': 'Product color not found'}, status=status.HTTP_404_NOT_FOUND)
+    if size not in sizes:
+        return Response({'error': 'Product size not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        inventory = Inventory.objects.get(
+            product=product, color=color, size=size)
+        return Response({'quantity': inventory.quantity})
+    except Inventory.DoesNotExist:
+        return Response({'error': 'Inventory not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def add_inventory_to_product(request, product_id):
+    print('Adding')
     try:
         product = Product.objects.get(id=product_id)
     except Product.DoesNotExist:
@@ -222,11 +224,19 @@ def add_inventory_to_product(request, product_id):
 
     serializer = InventorySerializer(data=request.data)
     if serializer.is_valid():
+        print(serializer.data)
         try:
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            quantity = request.POST.get('quantity')
+            normalized_color = request.POST.get(
+                'color').strip().replace(' ', '_').lower()
+            size = request.POST.get('size').upper()
+            inventory = Inventory.objects.create(product=product, color=normalized_color,
+                                                 size=size,
+                                                 quantity=quantity)
+            inventory.save()
+            return Response({"message": f"Invetory created Successfully for {product.name}"}, status=status.HTTP_201_CREATED)
         except IntegrityError:
-            message = f"A inventory with color : '{serializer.validated_data['color']}' and size '{serializer.validated_data['sizes']}' already exists for product '{product.name}'."
+            message = f"A inventory with color : '{serializer.validated_data['color']}' and size '{serializer.validated_data['size']}' already exists for product '{product.name}'."
             return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
     else:
         errors = {}
@@ -252,10 +262,19 @@ def update_inventory_for_product(request, product_id, inventory_id):
         inventory, data=request.data, partial=True)
     if serializer.is_valid():
         try:
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            quantity = request.data.get('quantity')
+            normalized_color = request.data.get(
+                'color').strip().replace(' ', '_').lower()
+            size = request.data.get('size').upper()
+
+            inventory.color = normalized_color
+            inventory.size = size
+            inventory.quantity = quantity
+            inventory.save()
+            return Response({"message": "Inventory updated successfuly"}, status=status.HTTP_201_CREATED)
         except IntegrityError:
-            message = f"A inventory with color : '{serializer.validated_data['color']}' and size '{serializer.validated_data['sizes']}' already exists for product '{product.name}'."
+            message = f"A inventory with color : '{serializer.validated_data['color']}' and size '{serializer.validated_data['size']}' already exists for product '{product.name}'."
             return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
     else:
         errors = {}
