@@ -3,7 +3,7 @@ import dj_database_url
 from pathlib import Path
 import environ
 from datetime import timedelta
-
+from .juzmin import JAZZMIN_SETTINGS
 
 env = environ.Env()
 environ.Env.read_env()
@@ -197,3 +197,4 @@ SIMPLE_JWT = {
 STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 # STRIPE_WEBHOOK_SECRET = ""
+JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
