@@ -4,7 +4,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from PIL import Image
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
-# Create your CustomUserManager here.
 from django.utils.translation import gettext_lazy as _
 
 
@@ -71,8 +70,6 @@ class CustomUserManager(BaseUserManager):
 
         return self._create_user(email, password, password2,  **extra_fields)
 
-# Create your User Model here.
-
 
 class User(AbstractBaseUser, PermissionsMixin):
     # Abstractbaseuser has password, last_login, is_active by default
@@ -110,14 +107,3 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-
-    def clean(self):
-        super().clean()
-        if self._password:
-            self.validate_password(self._password)
-
-    def validate_password(self, password):
-        # Add your custom password validation logic here
-        if len(password) < 8:
-            raise ValidationError(
-                _('Password must be at least 8 characters long.'))

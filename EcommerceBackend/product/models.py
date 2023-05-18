@@ -25,7 +25,7 @@ class Inventory(models.Model):
         Product, on_delete=models.CASCADE, related_name='inventory')
     color = models.CharField(max_length=50)
     quantity = models.IntegerField()
-    sizes = models.CharField(max_length=3, choices=[
+    size = models.CharField(max_length=3, choices=[
         ('S', 'Small'),
         ('M', 'Medium'),
         ('L', 'Large'),
@@ -38,7 +38,7 @@ class Inventory(models.Model):
         # Add a unique constraint on the `color` and `sizes` fields
         constraints = [
             models.UniqueConstraint(
-                fields=['product', 'color', 'sizes'], name='unique_color_sizes')
+                fields=['product', 'color', 'size'], name='unique_color_size')
         ]
 
     def __str__(self):
