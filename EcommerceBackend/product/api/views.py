@@ -226,10 +226,10 @@ def add_inventory_to_product(request, product_id):
     if serializer.is_valid():
         print(serializer.data)
         try:
-            quantity = request.POST.get('quantity')
-            normalized_color = request.POST.get(
+            quantity = request.data.get('quantity')
+            normalized_color = request.data.get(
                 'color').strip().replace(' ', '_').lower()
-            size = request.POST.get('size').upper()
+            size = request.data.get('size').upper()
             inventory = Inventory.objects.create(product=product, color=normalized_color,
                                                  size=size,
                                                  quantity=quantity)
