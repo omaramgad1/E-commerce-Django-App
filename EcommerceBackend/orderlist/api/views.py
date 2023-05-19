@@ -33,8 +33,14 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_Checkout(request):
-    user = User.objects.get(id=request.user.id)
-    cart = Cart.objects.get(user=user)
+
+    try:
+        user = User.objects.get(id=request.user.id)
+        cart = Cart.objects.get(user=user)
+    except User.DoesNotExist:
+        return Response({"error": "User not Found"}, status=status.HTTP_404_NOT_FOUND)
+    except Cart.DoesNotExist:
+        return Response({"error": "Cart not Found"}, status=status.HTTP_404_NOT_FOUND)
     cart_items = CartItem.objects.filter(cart=cart)
     payment_method = request.data.get('payment_method')
     shipping_address = request.data.get('shipping_address')
@@ -88,8 +94,6 @@ def create_Checkout(request):
             )
             pToken = PaymentToken(user=user, ptoken=token,
                                   status=True, token=checkout_session.id)
-            print(len(str(checkout_session.id)))
-            print(checkout_session.url)
             pToken.save()
         except stripe.error.AuthenticationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -134,17 +138,21 @@ def create_order(request, user_id, token, session_id, method, address):
         user = User.objects.get(id=user_id)
         cart = Cart.objects.get(user=user)
         cart_items = CartItem.objects.filter(cart=cart)
-
         # Get the user's order list
-        order_list = OrderList.objects.get(user=user)
-
-        # Create the order
-        order = Order.objects.create(
-            orderList=order_list,
-            shipping_address=address,
-            status='pending',
-            payment_method=method,
-        )
+        try:
+            order_list = OrderList.objects.get(user=user)
+        except:
+            return Response({"error": "error getting orderlist"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Create the order
+            order = Order.objects.create(
+                orderList=order_list,
+                shipping_address=address,
+                status='pending',
+                payment_method=method,
+            )
+        except:
+            return Response({"error": "error Creating Order"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Loop through the cart items and create order items
         for cart_item in cart_items:
@@ -245,7 +253,12 @@ def update_order_status(request, order_id):
     statuss = request.data.get('status')
     if statuss.lower() not in ['pending', 'shipped', 'delivered']:
         return Response({'error': 'Invalid Status'}, status=status.HTTP_400_BAD_REQUEST)
-    order = get_object_or_404(Order, id=order_id)
+
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+
     order.status = statuss
     order.save()
     return Response({'message': f'Order Status Changed to {statuss}'}, status=status.HTTP_200_OK)

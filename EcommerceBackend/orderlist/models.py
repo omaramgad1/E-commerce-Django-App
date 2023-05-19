@@ -1,9 +1,10 @@
+
+from django.utils import timezone
 from django.db import models
 from product.models import Product
 from django.db import models
 from user_app.models import User
 # Create your models here.
-from django.utils import timezone
 
 
 class OrderList(models.Model):
@@ -22,11 +23,12 @@ class Order(models.Model):
     shipped_time = models.DateTimeField(null=True, blank=True)
     delivered_time = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=[
+
         ('pending', 'Pending'),
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered')
 
-    ])
+    ], default='pending')
 
     payment_method = models.CharField(max_length=50, choices=[
         ('credit', 'Credit Card'),
@@ -37,10 +39,11 @@ class Order(models.Model):
         return f"{self.orderList.user.username}'s {self.pk} - Order"
 
     def save(self, *args, **kwargs):
-        if self.status == 'shipped' and not self.shipped_time:
+        if self.pk is None:
+            self.status = 'pending'
+        elif self.status == 'shipped' and not self.shipped_time:
             self.shipped_time = timezone.now()
-        super().save(*args, **kwargs)
-        if self.status == 'delivered' and not self.delivered_time:
+        elif self.status == 'delivered' and not self.delivered_time:
             self.delivered_time = timezone.now()
         super().save(*args, **kwargs)
 
