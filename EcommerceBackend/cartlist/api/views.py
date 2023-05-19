@@ -96,9 +96,10 @@ def add_cart_item(request, product_id):
         cart=cart, product=product, size=size, color=color, quantity=quantity)
 
     cart_item.save()
+    serializer = CartItemSerializer(cart_item)
 
     # Return a JSON response indicating success
-    return Response({'message': "Added To Your Cart successfully"}, status=status.HTTP_200_OK)
+    return Response({'message': "Added To Your Cart successfully", "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])
