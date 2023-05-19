@@ -59,13 +59,15 @@ def add_cart_item(request, product_id):
         # Get the inventory object
         message = "This product does not exist"
         return Response({'error': message}, status=status.HTTP_404_NOT_FOUND)
-    color = request.POST.get('color')
-    size = request.POST.get('size')
-    quantity = request.POST.get('quantity')
+    color = request.data.get('color')
+    size = request.data.get('size')
+    quantity = request.data.get('quantity')
+    print(color, size, quantity)
+
     if color and size and quantity:
         color = color.strip().replace(' ', '_').lower()
         size = size.strip().replace(' ', '').upper()
-        quantity = int(request.POST.get('quantity'))
+        quantity = int(quantity)
 
     else:
         return Response({'error': "Please fill in all fields ( color , size ,  quantity)"}, status=status.HTTP_400_BAD_REQUEST)
