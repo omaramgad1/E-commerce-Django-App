@@ -16,8 +16,15 @@ from django.shortcuts import get_object_or_404
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_cart(request):
-    user = get_object_or_404(User, id=request.user.id)
-    cart = Cart.objects.get(user=user)
+    try:
+        user = User.objects.get(id=request.user.id)
+        cart = Cart.objects.get(user=user)
+    except User.DoesNotExist:
+        return Response({'error': "User not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+    except Cart.DoesNotExist:
+        return Response({'error': "Cart not Found"}, status=status.HTTP_404_NOT_FOUND)
+
     serializer = CartSerializer(cart)
     return Response(serializer.data)
 
@@ -25,8 +32,14 @@ def get_cart(request):
 @api_view(['GET'])
 @permission_classes([IsOwner])
 def get_cart_item(request, item_id):
-    user = get_object_or_404(User, id=request.user.id)
-    item = get_object_or_404(CartItem, id=item_id, cart__user=user)
+    try:
+        user = User.objects.get(id=request.user.id)
+        item = CartItem.objects.get(id=item_id, cart__user=user)
+    except User.DoesNotExist:
+        return Response({'error': "User not Found"}, status=status.HTTP_404_NOT_FOUND)
+    except CartItem.DoesNotExist:
+        return Response({'error': "Cart Item not Found"}, status=status.HTTP_404_NOT_FOUND)
+
     serializer = CartItemSerializer(item)
     return Response(serializer.data)
 
@@ -34,8 +47,10 @@ def get_cart_item(request, item_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_cart_item(request, product_id):
-
-    cart = Cart.objects.get(user=request.user)
+    try:
+        cart = Cart.objects.get(user=request.user)
+    except Cart.DoesNotExist:
+        return Response({'error': "Cart not Found"}, status=status.HTTP_404_NOT_FOUND)
 
     try:
         # Get the product and inventory item

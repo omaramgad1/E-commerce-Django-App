@@ -43,3 +43,7 @@ class Inventory(models.Model):
 
     def __str__(self):
         return self.product.name+"_"+self.product.subcategory.name+"_"+self.product.subcategory.category.name + "_Inventory_" + str(self.pk)
+
+    def save(self, *args, **kwargs):
+        self.color = self.color.strip().replace(" ", "_").lower()
+        super(Inventory, self).save(*args, **kwargs)
