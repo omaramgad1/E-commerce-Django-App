@@ -41,6 +41,8 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if self.pk is None:
             self.status = 'pending'
+            self.shipped_time = None
+            self.delivered_time = None
         elif self.status == 'shipped' and not self.shipped_time:
             self.shipped_time = timezone.now()
         elif self.status == 'delivered' and not self.delivered_time:

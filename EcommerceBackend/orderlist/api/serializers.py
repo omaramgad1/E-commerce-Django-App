@@ -24,10 +24,11 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     orderItems = OrderItemSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()
+    username = serializers.ReadOnlyField(source='orderList.user.username')
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ('username', 'total', 'orderItems',)  # '__all__'
         # exclude = ('items',)
 
     def get_total(self, obj):
