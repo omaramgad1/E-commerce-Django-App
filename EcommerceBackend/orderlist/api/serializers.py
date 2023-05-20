@@ -28,7 +28,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('orderList', 'username', 'payment_method', 'shipping_address', 'created_at',
+        fields = ('id', 'orderList', 'username', 'payment_method', 'shipping_address', 'created_at',
                   'shipped_time', 'delivered_time', 'status', 'total', 'orderItems',)  # '__all__'
         # exclude = ('items',)
 
