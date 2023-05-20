@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import Cart, CartItem
+from product.models import Inventory
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -11,14 +12,19 @@ class CartItemSerializer(serializers.ModelSerializer):
     price = serializers.DecimalField(
         source='product.price', max_digits=8, decimal_places=2)
     subtotal = serializers.SerializerMethodField()
+    stock = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'product_name', 'quantity',
-                  'size', 'color', 'price', 'product_img', 'subtotal', 'cart']
+        fields = '__all__'
 
     def get_subtotal(self, obj):
         return obj.quantity * obj.product.price
+
+    def get_stock(self, obj):
+        inventory = Inventory.objects.get(
+            product=obj.product, color=obj.color, size=obj.size)
+        return inventory.quantity
 
 
 class CartSerializer(serializers.ModelSerializer):
