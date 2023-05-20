@@ -32,6 +32,8 @@ urlpatterns = [
     path('<int:product_id>/inventory/', get_product_inventory,
          name='get_product_inventory'),
 
+    path('<int:product_id>/inventory/<int:inventory_id>/', get_product_inventory_by_id,
+         name='get_product_inventory_by_id'),
 
     path('<int:product_id>/inventory/colors/', get_inventory_colors_for_product,
          name='get_inventory_colors_for_product'),
