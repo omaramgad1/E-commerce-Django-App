@@ -28,7 +28,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('username', 'total', 'orderItems',)  # '__all__'
+        fields = ('orderList', 'username', 'payment_method', 'shipping_address', 'created_at',
+                  'shipped_time', 'delivered_time', 'status', 'total', 'orderItems',)  # '__all__'
         # exclude = ('items',)
 
     def get_total(self, obj):
