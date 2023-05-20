@@ -135,6 +135,20 @@ def get_product_inventory(request, product_id):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def get_product_inventory_by_id(request, product_id, inventory_id):
+    if request.method == 'GET':
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        inventory = Inventory.objects.get(product=product, id=inventory_id)
+        serializer = InventorySerializer(inventory)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def get_inventory_colors_for_product(request, product_id):
     try:
         Product.objects.get(id=product_id)
