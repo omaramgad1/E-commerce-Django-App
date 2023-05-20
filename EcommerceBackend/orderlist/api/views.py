@@ -114,7 +114,7 @@ def cancel_order(request):
         pToken.save()
     except PaymentToken.DoesNotExist:
         return Response({'error': 'Invalid payment token'}, status=status.HTTP_400_BAD_REQUEST)
-    return Response({'detail': 'Order cancelled successfully'})
+    return Response({'message': 'Order cancelled successfully'})
 
 
 @api_view(['GET'])
@@ -189,6 +189,36 @@ def create_order(request, user_id, token, session_id, method, address):
     return Response({'message': "Order Created Successfully"}, status=status.HTTP_201_CREATED)
 
 
+@api_view(['DELETE'])
+@permission_classes([IsOwner])
+def delete_order(request, order_id):
+    order = Order.objects.get(id=order_id)
+    order_items = OrderItem.objects.filter(order=order)
+    if order.status.lower() == 'pending':
+        for order_item in order_items:
+            inventory = Inventory.objects.get(
+                product=order_item.product,
+                color=order_item.color,
+                size=order_item.size,
+            )
+            inventory.quantity = inventory.quantity + order_item.quantity
+            inventory.save()
+            # order_item.delete()
+        # If the payment method is 'credit', send a refund and notify the user
+        if order.payment_method == 'credit':
+            message = 'You money will be refunded to your credit within 24 hours.'
+        else:
+            message = 'Order canceled successfully.'
+
+        # Update the order status to 'canceled'
+        order.status = 'canceled'
+        order.save()
+
+        return Response({'message': message}, status=status.HTTP_200_OK)
+    else:
+        return Response({'error': 'Cannot delete order with status other than "pending".'}, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET'])
 @permission_classes([IsOwner])
 def order_details(request, order_id):
@@ -205,27 +235,6 @@ def order_details(request, order_id):
                         status=status.HTTP_200_OK)
     except Order.DoesNotExist:
         return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['DELETE'])
-@permission_classes([IsOwner])
-def delete_order(request, order_id):
-    order = Order.objects.get(id=order_id)
-    order_items = OrderItem.objects.filter(order=order)
-    if order.status.lower() == 'pending':
-        for order_item in order_items:
-            inventory = Inventory.objects.get(
-                product=order_item.product,
-                color=order_item.color,
-                size=order_item.size,
-            )
-            inventory.quantity = inventory.quantity + order_item.quantity
-            inventory.save()
-            order_item.delete()
-        order.delete()
-        return Response({'message': 'Order deleted successfully'}, status=status.HTTP_200_OK)
-    else:
-        return Response({'error': 'Cannot delete order with status other than "pending".'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
