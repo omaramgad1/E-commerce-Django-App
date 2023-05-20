@@ -6,10 +6,11 @@ from category.models import Category
 
 class InventorySerializer(serializers.ModelSerializer):
     product = serializers.CharField(source='product.name', read_only=True)
+    product_id = serializers.ReadOnlyField(source='product.id')
 
     class Meta:
         model = Inventory
-        fields = '__all__'  # ('color', 'sizes', 'quantity')
+        fields = '__all__'
 
 
 class ProductSerializer(serializers.ModelSerializer):
