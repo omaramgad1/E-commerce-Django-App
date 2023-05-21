@@ -64,7 +64,7 @@ def create_Checkout(request):
             return Response({'error': f"Sorry, we do not have enough stock for {cart_item.product.name}"}, status=status.HTTP_400_BAD_REQUEST)
 
     if payment_method == 'cod':
-        return redirect(f'{base_url}/order/create/{None}/{user.id}/{None}/{payment_method}/{shipping_address}', code=303)
+        return redirect(f'{base_url}/order/create/{None}/{user.id}/{None}/{payment_method}/{shipping_address}/', code=303)
 
     elif payment_method == 'credit':
         line_items = []
@@ -89,7 +89,7 @@ def create_Checkout(request):
                 payment_method_types=['card'],
                 line_items=line_items,
                 mode='payment',
-                success_url=f'{base_url}/order/create/{token}/{user.id}/{{CHECKOUT_SESSION_ID}}/{payment_method}/{shipping_address}',
+                success_url=f'{base_url}/order/create/{token}/{user.id}/{{CHECKOUT_SESSION_ID}}/{payment_method}/{shipping_address}/',
                 cancel_url=f'{base_url}/order/cancel?token={token}&user={user.id}',
             )
             pToken = PaymentToken(user=user, ptoken=token,
@@ -98,7 +98,7 @@ def create_Checkout(request):
         except stripe.error.AuthenticationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         print(checkout_session.url)
-        return redirect(checkout_session.url, code=303)
+        return Response({"url": checkout_session.url}, code=200)
 
 
 @api_view(['POST'])
@@ -186,6 +186,9 @@ def create_order(request, user_id, token, session_id, method, address):
         order_list.orders.add(order)
         order_list.save()
     # Serialize and return the updated cart
+    if method == 'credit':
+        return Response({'message': "Order Created Successfully"}, status=status.HTTP_201_CREATED)
+
     return Response({'message': "Order Created Successfully"}, status=status.HTTP_201_CREATED)
 
 
