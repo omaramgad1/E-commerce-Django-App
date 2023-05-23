@@ -22,8 +22,12 @@ class CartItemSerializer(serializers.ModelSerializer):
         return obj.quantity * obj.product.price
 
     def get_stock(self, obj):
-        inventory = Inventory.objects.get(
-            product=obj.product, color=obj.color, size=obj.size)
+        try:
+            inventory = Inventory.objects.get(
+                product=obj.product, color=obj.color, size=obj.size)
+        except Inventory.DoesNotExist:
+            return 0
+
         return inventory.quantity
 
 
