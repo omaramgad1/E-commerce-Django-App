@@ -194,7 +194,7 @@ def create_order(request, user_id, token, session_id, method, address):
         order_list.save()
     # Serialize and return the updated cart
     if method == 'credit':
-        return Response({'message': "Order Created Successfully"}, status=status.HTTP_201_CREATED)
+        return redirect('https://main--jassafashion.netlify.app/checkout/success')
 
     return Response({'message': "Order Created Successfully"}, status=status.HTTP_201_CREATED)
 
