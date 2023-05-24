@@ -84,7 +84,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True, blank=True,   validators=[validate_date_of_birth])
     phone = PhoneNumberField()
     profileImgUrl = models.ImageField(
-        upload_to='profileImages/', blank=True, validators=[validate_image])  #
+        upload_to='profileImages/', blank=True)  # validators=[validate_image]
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
