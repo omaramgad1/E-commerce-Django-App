@@ -197,6 +197,7 @@ def create_order(request, user_id, token, session_id, method, address):
 def delete_order(request, order_id):
     order = Order.objects.get(id=order_id)
     order_items = OrderItem.objects.filter(order=order)
+
     if order.status.lower() == 'pending':
         for order_item in order_items:
             inventory = Inventory.objects.get(

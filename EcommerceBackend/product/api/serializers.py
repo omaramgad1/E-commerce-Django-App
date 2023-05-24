@@ -17,6 +17,8 @@ class ProductSerializer(serializers.ModelSerializer):
     subcategory = serializers.CharField(source='subcategory.name')
     parent_category = serializers.CharField(
         source='subcategory.category.name')
+    inventory = InventorySerializer(
+        many=True, read_only=True)
 
     class Meta:
         model = Product
