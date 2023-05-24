@@ -48,6 +48,9 @@ def create_Checkout(request):
     if not payment_method and not shipping_address:
         return Response({"error": "invalid data, please send payment_method and  shipping_address correct"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
+    shipping_address = shipping_address.replace(' ', '').strip()
+    payment_method = payment_method.replace(' ', '').strip()
+
     base_url = request.scheme + '://' + request.get_host()
     # validation before checkout
     if not cart_items:
@@ -97,6 +100,10 @@ def create_Checkout(request):
             pToken.save()
         except stripe.error.AuthenticationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(shipping_address)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         print(checkout_session.url)
         return Response({"url": checkout_session.url})
 
