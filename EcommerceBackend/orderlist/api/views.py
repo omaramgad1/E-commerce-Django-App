@@ -98,7 +98,7 @@ def create_Checkout(request):
         except stripe.error.AuthenticationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         print(checkout_session.url)
-        return Response({"url": checkout_session.url}, code=303)
+        return Response({"url": checkout_session.url})
 
 
 @api_view(['POST'])
